@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: scrapping-web
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: scrapping-db
+          property: connectionString
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+databases:
+  - name: scrapping-db
