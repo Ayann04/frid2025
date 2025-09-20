@@ -1,8 +1,8 @@
-FROM python:3.11-slim
+FROM python:3.11-bullseye
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system deps (no chromium here!)
+# Install system deps
 RUN apt-get update && apt-get install -y \
     wget curl unzip gnupg ca-certificates \
     fonts-liberation libasound2 libatk1.0-0 libcups2 \
@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     xdg-utils --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
-# Install latest Chromium + ChromeDriver (from Chrome for Testing project)
+# Install Chromium + ChromeDriver (from Chrome for Testing)
 RUN CHROME_VERSION=$(curl -s https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE) && \
     wget -q https://storage.googleapis.com/chrome-for-testing-public/$CHROME_VERSION/linux64/chrome-linux64.zip -O /tmp/chrome.zip && \
     wget -q https://storage.googleapis.com/chrome-for-testing-public/$CHROME_VERSION/linux64/chromedriver-linux64.zip -O /tmp/chromedriver.zip && \
@@ -23,7 +23,7 @@ RUN CHROME_VERSION=$(curl -s https://googlechromelabs.github.io/chrome-for-testi
     ln -s /opt/chromedriver/chromedriver /usr/bin/chromedriver && \
     rm -rf /tmp/*
 
-# Environment variables so Selenium knows where to look
+# Env vars for Selenium
 ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
