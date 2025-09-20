@@ -38,5 +38,6 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD ["gunicorn", "scrapping.wsgi:application", "--workers=2", "--threads=2", "--bind=0.0.0.0:8000"]
+CMD ["CMD gunicorn scrapping.wsgi:application --workers=1 --threads=1 --bind 0.0.0.0:$PORT"]
+
 
