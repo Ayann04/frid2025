@@ -1,42 +1,39 @@
 FROM python:3.11-slim
 
-# Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies + Chromium
+# Install system deps (no chromium here!)
 RUN apt-get update && apt-get install -y \
-    wget gnupg ca-certificates curl unzip \
-    chromium \
+    wget curl unzip gnupg ca-certificates \
     fonts-liberation libasound2 libatk1.0-0 libcups2 \
     libdbus-1-3 libgdk-pixbuf2.0-0 libnspr4 libnss3 \
     libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 \
     xdg-utils --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
-# Install ChromeDriver manually (matches Chromium version)
-RUN CHROMIUM_VERSION=$(chromium --version | awk '{print $2}') && \
-    DRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_${CHROMIUM_VERSION%%.*}") && \
-    curl -sSL "https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip" -o /tmp/chromedriver.zip && \
-    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
-    mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
-    chmod +x /usr/local/bin/chromedriver && \
+# Install latest Chromium + ChromeDriver (from Chrome for Testing project)
+RUN CHROME_VERSION=$(curl -s https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE) && \
+    wget -q https://storage.googleapis.com/chrome-for-testing-public/$CHROME_VERSION/linux64/chrome-linux64.zip -O /tmp/chrome.zip && \
+    wget -q https://storage.googleapis.com/chrome-for-testing-public/$CHROME_VERSION/linux64/chromedriver-linux64.zip -O /tmp/chromedriver.zip && \
+    unzip /tmp/chrome.zip -d /opt/ && \
+    unzip /tmp/chromedriver.zip -d /opt/ && \
+    mv /opt/chrome-linux64 /opt/chrome && \
+    mv /opt/chromedriver-linux64 /opt/chromedriver && \
+    ln -s /opt/chrome/chrome /usr/bin/chromium && \
+    ln -s /opt/chromedriver/chromedriver /usr/bin/chromedriver && \
     rm -rf /tmp/*
 
-# Set environment variables so Selenium finds binaries
+# Environment variables so Selenium knows where to look
 ENV CHROME_BIN=/usr/bin/chromium
-ENV CHROMEDRIVER_PATH=/usr/local/bin/chromedriver
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
-# Set workdir
 WORKDIR /app
 
-# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
 COPY . .
 
-# Collect static files
 RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
